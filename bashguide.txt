@@ -1,0 +1,409 @@
+
+If the quota daemon is running, use that information; if not, use find.
+Create XML-style output from a Tab-separated list in the following form:
+Meaning very long line with a lot of description
+meaning another long line
+othermeaning more longline
+testmeaning looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong lin
+The output should read:
+<row>
+<entry>Meaning</entry>
+<entry>
+very long line
+</entry>
+</row>
+<row>
+<entry>meaning</entry>
+<entry>
+long line
+</entry>
+</row>
+<row>
+<entryothermeaning</entry>
+<entry>
+more longline
+</entry>
+</row>
+<row>
+<entrytestmeaning</entry>
+<entry>
+looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong line, but i mean re
+</entry>
+</row>
+Additionally, if you know anything about XML, write a BEGIN and END script to complete the table.
+Or do it in HTML.
+3.
+Bash Guide for Beginners
+Chapter 6. The GNU awk programming language 78
+Chapter 7. Conditional statements
+In this chapter we will discuss the use of conditionals in Bash scripts. This includes the
+following topics:
+The if statement♦
+Using the exit status of a command♦
+Comparing and testing input and files♦
+if/then/else constructs♦
+if/then/elif/else constructs♦
+Using and testing the positional parameters♦
+Nested if statements♦
+Boolean expressions♦
+Using case statements♦
+7.1. Introduction to if
+7.1.1. General
+At times you need to specify different courses of action to be taken in a shell script, depending on the success
+or failure of a command. The if construction allows you to specify such conditions.
+The most compact syntax of the if command is:
+if TEST-COMMANDS; then CONSEQUENT-COMMANDS; fi
+The TEST-COMMAND list is executed, and if its return status is zero, the CONSEQUENT-COMMANDS
+list is executed. The return status is the exit status of the last command executed, or zero if no condition tested
+true.
+The TEST-COMMAND often involves numerical or string comparison tests, but it can also be any command
+that returns a status of zero when it succeeds and some other status when it fails. Unary expressions are often
+used to examine the status of a file. If the FILE argument to one of the primaries is of the form /dev/fd/N,
+then file descriptor "N" is checked. stdin, stdout and stderr and their respective file descriptors may
+also be used for tests.
+7.1.1.1. Expressions used with if
+The table below contains an overview of the so-called "primaries" that make up the TEST-COMMAND
+command or list of commands. These primaries are put between square brackets to indicate the test of a
+conditional expression.
+Table 7-1. Primary expressions
+Primary Meaning
+[ -a FILE ] True if FILE exists.
+Chapter 7. Conditional statements 79
+[ -b FILE ] True if FILE exists and is a block-special file.
+[ -c FILE ] True if FILE exists and is a character-special file.
+[ -d FILE ] True if FILE exists and is a directory.
+[ -e FILE ] True if FILE exists.
+[ -f FILE ] True if FILE exists and is a regular file.
+[ -g FILE ] True if FILE exists and its SGID bit is set.
+[ -h FILE ] True if FILE exists and is a symbolic link.
+[ -k FILE ] True if FILE exists and its sticky bit is set.
+[ -p FILE ] True if FILE exists and is a named pipe (FIFO).
+[ -r FILE ] True if FILE exists and is readable.
+[ -s FILE ] True if FILE exists and has a size greater than zero.
+[ -t FD ] True if file descriptor FD is open and refers to a terminal.
+[ -u FILE ] True if FILE exists and its SUID (set user ID) bit is set.
+[ -w FILE ] True if FILE exists and is writable.
+[ -x FILE ] True if FILE exists and is executable.
+[ -O FILE ] True if FILE exists and is owned by the effective user ID.
+[ -G FILE ] True if FILE exists and is owned by the effective group ID.
+[ -L FILE ] True if FILE exists and is a symbolic link.
+[ -N FILE ] True if FILE exists and has been modified since it was last read.
+[ -S FILE ] True if FILE exists and is a socket.
+[ FILE1 -nt
+FILE2 ]
+True if FILE1 has been changed more recently than FILE2, or if FILE1 exists and
+FILE2 does not.
+[ FILE1 -ot
+FILE2 ] True if FILE1 is older than FILE2, or is FILE2 exists and FILE1 does not.
+[ FILE1 -ef
+FILE2 ] True if FILE1 and FILE2 refer to the same device and inode numbers.
+[ -o OPTIONNAME
+] True if shell option "OPTIONNAME" is enabled.
+[ -z STRING ] True of the length if "STRING" is zero.
+[ -n STRING ] or [
+STRING ] True if the length of "STRING" is non-zero.
+[ STRING1 ==
+STRING2 ]
+True if the strings are equal. "=" may be used instead of "==" for strict POSIX
+compliance.
+[ STRING1 !=
+STRING2 ] True if the strings are not equal.
+[ STRING1 <
+STRING2 ] True if "STRING1" sorts before "STRING2" lexicographically in the current locale.
+[ STRING1 >
+STRING2 ] True if "STRING1" sorts after "STRING2" lexicographically in the current locale.
+[ ARG1 OP ARG2 ]
+"OP" is one of -eq, -ne, -lt, -le, -gt or -ge. These arithmetic binary operators
+return true if "ARG1" is equal to, not equal to, less than, less than or equal to, greater
+than, or greater than or equal to "ARG2", respectively. "ARG1" and "ARG2" are
+integers.
+Expressions may be combined using the following operators, listed in decreasing order of precedence:
+Bash Guide for Beginners
+Chapter 7. Conditional statements 80
+Table 7-2. Combining expressions
+Operation Effect
+[ ! EXPR ] True if EXPR is false.
+[ ( EXPR ) ] Returns the value of EXPR. This may be used to override the normal precedence of
+operators.
+[ EXPR1 -a EXPR2
+] True if both EXPR1 and EXPR2 are true.
+[ EXPR1 -o EXPR2
+] True if either EXPR1 or EXPR2 is true.
+The [ (or test) built-in evaluates conditional expressions using a set of rules based on the number of
+arguments. More information about this subject can be found in the Bash documentation. Just like the if is
+closed with fi, the opening square bracket should be closed after the conditions have been listed.
+7.1.1.2. Commands following the then statement
+The CONSEQUENT-COMMANDS list that follows the then statement can be any valid UNIX command,
+any executable program, any executable shell script or any shell statement, with the exception of the closing
+fi. It is important to remember that the then and fi are considered to be separated statements in the shell.
+Therefore, when issued on the command line, they are separated by a semi-colon.
+In a script, the different parts of the if statement are usually well-separated. Below, a couple of simple
+examples.
+7.1.1.3. Checking files
+The first example checks for the existence of a file:
+anny ~> cat msgcheck.sh
+#!/bin/bash
+echo "This scripts checks the existence of the messages file."
+echo "Checking..."
+if [ -f /var/log/messages ]
+then
+echo "/var/log/messages exists."
+fi
+echo
+echo "...done."
+anny ~> ./msgcheck.sh
+This scripts checks the existence of the messages file.
+Checking...
+/var/log/messages exists.
+...done.
+7.1.1.4. Checking shell options
+To add in your Bash configuration files:
+# These lines will print a message if the noclobber option is set:
+Bash Guide for Beginners
+Chapter 7. Conditional statements 81
+if [ -o noclobber ]
+then
+echo "Your files are protected against accidental overwriting using redirection."
+fi
+The environment
+The above example will work when entered on the command line:
+anny ~> if [ -o noclobber ] ; then echo ; echo "your files are protected
+against overwriting." ; echo ; fi
+your files are protected against overwriting.
+anny ~>
+However, if you use testing of conditions that depend on the environment, you might get different results
+when you enter the same command in a script, because the script will open a new shell, in which
+expected variables and options might not be set automatically.
+7.1.2. Simple applications of if
+7.1.2.1. Testing exit status
+The ? variable holds the exit status of the previously executed command (the most recently completed
+foreground process).
+The following example shows a simple test:
+anny ~> if [ $? -eq 0 ]
+More input> then echo 'That was a good job!'
+More input> fi
+That was a good job!
+anny ~>
+The following example demonstrates that TEST-COMMANDS might be any UNIX command that returns an
+exit status, and that if again returns an exit status of zero:
+anny ~> if ! grep $USER /etc/passwd
+More input> then echo "your user account is not managed locally"; fi
+your user account is not managed locally
+anny > echo $?
+0
+anny >
+The same result can be obtained as follows:
+anny > grep $USER /etc/passwd
+anny > if [ $? -ne 0 ] ; then echo "not a local account" ; fi
+not a local account
+anny >
+Bash Guide for Beginners
+Chapter 7. Conditional statements 82
+7.1.2.2. Numeric comparisons
+The examples below use numerical comparisons:
+anny > num=`wc -l work.txt`
+anny > echo $num
+201
+anny > if [ "$num" -gt "150" ]
+More input> then echo ; echo "you've worked hard enough for today."
+More input> echo ; fi
+you've worked hard enough for today.
+anny >
+This script is executed by cron every Sunday. If the week number is even, it reminds you to put out the
+garbage cans:
+#!/bin/bash
+# Calculate the week number using the date command:
+WEEKOFFSET=$[ $(date +"%V") % 2 ]
+# Test if we have a remainder. If not, this is an even week so send a message.
+# Else, do nothing.
+if [ $WEEKOFFSET -eq "0" ]; then
+echo "Sunday evening, put out the garbage cans." | mail -s "Garbage cans out" your@your_domain.
+fi
+7.1.2.3. String comparisons
+An example of comparing strings for testing the user ID:
+if [ "$(whoami)" != 'root' ]; then
+echo "You have no permission to run $0 as non-root user."
+exit 1;
+fi
+With Bash, you can shorten this type of construct. The compact equivalent of the above test is as follows:
+[ "$(whoami)" != 'root' ] && ( echo you are using a non-privileged account; exit 1 )
+Similar to the "&&" expression which indicates what to do if the test proves true, "||" specifies what to do if
+the test is false.
+Regular expressions may also be used in comparisons:
+anny > gender="female"
+anny > if [[ "$gender" == f* ]]
+More input> then echo "Pleasure to meet you, Madame."; fi
+Pleasure to meet you, Madame.
+anny >
+Bash Guide for Beginners
+Chapter 7. Conditional statements 83
+y
+CONFIRM
+shift
+done
+9.8. Summary
+In this chapter, we discussed how repetitive commands can be incorporated in loop constructs. Most common
+loops are built using the for, while or until statements, or a combination of these commands. The for loop
+executes a task a defined number of times. If you don't know how many times a command should execute, use
+either until or while to specify when the loop should end.
+Loops can be interrupted or reiterated using the break and continue statements.
+A file can be used as input for a loop using the input redirection operator, loops can also read output from
+commands that is fed into the loop using a pipe.
+The select construct is used for printing menus in interactive scripts. Looping through the command line
+arguments to a script can be done using the shift statement.
+9.9. Exercises
+Remember: when building scripts, work in steps and test each step before incorporating it in your script.
+Create a script that will take a (recursive) copy of files in /etc so that a beginning system
+administrator can edit files without fear.
+1.
+Write a script that takes exactly one argument, a directory name. If the number of arguments is more
+or less than one, print a usage message. If the argument is not a directory, print another message. For
+the given directory, print the five biggest files and the five files that were most recently modified.
+2.
+Can you explain why it is so important to put the variables in between double quotes in the example
+from Section 9.4.2?
+3.
+Write a script similar to the one in Section 9.5.1, but think of a way of quitting after the user has
+executed 3 loops.
+4.
+Think of a better solution than move -b for the script from Section 9.5.3 to prevent overwriting of
+existing files. For instance, test whether or not a file exists. Don't do unnecessary work!
+5.
+Rewrite the whichdaemon.sh script from Section 7.2.4, so that it:
+Prints a list of servers to check, such as Apache, the SSH server, the NTP daemon, a name
+daemon, a power management daemon, and so on.
+♦
+For each choice the user can make, print some sensible information, like the name of the web
+server, NTP trace information, and so on.
+♦
+Optionally, build in a possibility for users to check other servers than the ones listed. For such
+cases, check that at least the given process is running.
+♦
+Review the script from Section 9.2.2.4. Note how character input other than q is processed.
+Rebuild this script so that it prints a message if characters are given as input.
+♦
+6.
+Bash Guide for Beginners
+Chapter 9. Repetitive tasks 120
+Chapter 10. More on variables
+In this chapter, we will discuss the advanced use of variables and arguments. Upon
+completion, you will be able to:
+Declare and use an array of variables♦
+Specify the sort of variable you want to use♦
+Make variables read-only♦
+Use set to assign a value to a variable♦
+10.1. Types of variables
+10.1.1. General assignment of values
+As we already saw, Bash understands many different kinds of variables or parameters. Thus far, we haven't
+bothered much with what kind of variables we assigned, so our variables could hold any value that we
+assigned to them. A simple command line example demonstrates this:
+[bob in ~] VARIABLE=12
+[bob in ~] echo $VARIABLE
+12
+[bob in ~] VARIABLE=string
+[bob in ~] echo $VARIABLE
+string
+There are cases when you want to avoid this kind of behavior, for instance when handling telephone and other
+numbers. Apart from integers and variables, you may also want to specify a variable that is a constant. This is
+often done at the beginning of a script, when the value of the constant is declared. After that, there are only
+references to the constant variable name, so that when the constant needs to be changed, it only has to be done
+once. A variable may also be a series of variables of any type, a so-called array of variables (VAR0VAR1,
+VAR2, ... VARN).
+10.1.2. Using the declare built-in
+Using a declare statement, we can limit the value assignment to variables.
+The syntax for declare is the following:
+declare OPTION(s) VARIABLE=value
+The following options are used to determine the type of data the variable can hold and to assign it attributes:
+Table 10-1. Options to the declare built-in
+Option Meaning
+Chapter 10. More on variables 121
+one two three
+[bob in ~] echo $ARRAY[*]
+one[*]
+[bob in ~] echo ${ARRAY[2]}
+three
+[bob in ~] ARRAY[3]=four
+[bob in ~] echo ${ARRAY[*]}
+one two three four
+Referring to the content of a member variable of an array without providing an index number is the same as
+referring to the content of the first element, the one referenced with index number zero.
+10.2.3. Deleting array variables
+The unset built-in is used to destroy arrays or member variables of an array:
+[bob in ~] unset ARRAY[1]
+[bob in ~] echo ${ARRAY[*]}
+one three four
+[bob in ~] unset ARRAY
+[bob in ~] echo ${ARRAY[*]}
+<--no output-->
+10.2.4. Examples of arrays
+Practical examples of the usage of arrays are hard to find. You will find plenty of scripts that don't really do
+anything on your system but that do use arrays to calculate mathematical series, for instance. And that would
+be one of the more interesting examples...most scripts just show what you can do with an array in an
+oversimplified and theoretical way.
+The reason for this dullness is that arrays are rather complex structures. You will find that most practical
+examples for which arrays could be used are already implemented on your system using arrays, however on a
+lower level, in the C programming language in which most UNIX commands are written. A good example is
+the Bash history built-in command. Those readers who are interested might check the built-ins directory
+in the Bash source tree and take a look at fc.def, which is processed when compiling the built-ins.
+Another reason good examples are hard to find is that not all shells support arrays, so they break
+compatibility.
+After long days of searching, I finally found this example operating at an Internet provider. It distributes
+Apache web server configuration files onto hosts in a web farm:
+#!/bin/bash
+if [ $(whoami) != 'root' ]; then
+echo "Must be root to run $0"
+exit 1;
+fi
+Bash Guide for Beginners
+Chapter 10. More on variables 124
+if [ -z $1 ]; then
+echo "Usage: $0 </path/to/httpd.conf>"
+exit 1
+fi
+httpd_conf_new=$1
+httpd_conf_path="/usr/local/apache/conf"
+login=htuser
+farm_hosts=(web03 web04 web05 web06 web07)
+for i in ${farm_hosts[@]}; do
+su $login -c "scp $httpd_conf_new ${i}:${httpd_conf_path}"
+su $login -c "ssh $i sudo /usr/local/apache/bin/apachectl graceful"
+done
+exit 0
+First two tests are performed to check whether the correct user is running the script with the correct
+arguments. The names of the hosts that need to be configured are listed in the array farm_hosts. Then all
+these hosts are provided with the Apache configuration file, after which the daemon is restarted. Note the use
+of commands from the Secure Shell suite, encrypting the connections to remote hosts.
+Thanks, Eugene and colleague, for this contribution.
+Dan Richter contributed the following example. This is the problem he was confronted with:
+"...In my company, we have demos on our web site, and every week someone has to test all of them. So I have
+a cron job that fills an array with the possible candidates, uses date +%W to find the week of the year, and does
+a modulo operation to find the correct index. The lucky person gets notified by e-mail."
+And this was his way of solving it:
+#!/bin/bash
+# This is get-tester-address.sh
+#
+# First, we test whether bash supports arrays.
+# (Support for arrays was only added recently.)
+#
+whotest[0]='test' || (echo 'Failure: arrays not supported in this version of
+bash.' && exit 2)
+#
+# Our list of candidates. (Feel free to add or
+# remove candidates.)
+#
+wholist=(
+'Bob Smith <bob@example.com>'
+'Jane L. Williams <jane@example.com>'
+'Eric S. Raymond <esr@example.com>'
+'Larry Wall <wall@example.com>'
+'Linus Torvalds <linus@example.com>'
+)
+#
+# Count the number of possible testers.
+# (Loop until we find an empty string.)
+#
+count=0
+while [ "x${wholist[count]}" != "x" ]
+Bash Guide for Beginners
+Chapter 10. More on variables 125
+

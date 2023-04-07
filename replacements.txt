@@ -1,0 +1,53 @@
+﻿NETWORKING
+
+## nslookup 
+dig @192.168.1.1 example.com A +noall +answer +nocmd
+
+## nslookup (ptr)
+dig -x @192.168.1.1 example.com  +noall +answer +nocmd
+
+## ifconfig
+ip address
+
+## route -n
+ip route list
+
+## netstat -n --tcp --listen
+ss --numeric --tcp --listen
+
+UTILITIES
+
+## fgrep 'tux' /etc/passwd
+grep -F 'tux' /etc/passwd
+
+## egrep '^[fj]' /etc/passwd
+grep -E '^[fj]' /etc/passwd
+
+## du
+dust
+
+## find
+fd
+
+## man
+tealdeer
+
+## ls
+exa
+
+## cat
+bat --plain
+
+PACKAGING
+
+## yum
+dnf
+
+## apt-get
+apt
+
+## pip
+python3 -m pip
+
+## repoquery
+dnf repoquery
